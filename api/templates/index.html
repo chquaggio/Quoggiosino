@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Benvenuto, {{ username }}!</title>
+    <style>
+        .balance-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Benvenuto, {{ username }}!</h1>
+    <p>Bilancio: ${{ balance }}</p>
+    <div class="balance-container">
+        <form id="balance-form">
+            <label for="amount">Importo:</label>
+            <input type="number" id="amount" name="amount" required>
+            <button type="button" onclick="aggiungi()">Aggiungi</button>
+            <button type="button" onclick="rimuovi()">Rimuovi</button>
+        </form>
+    </div>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <br>
+    <a href="{{ url_for('leaderboard') }}">Vedi la classifica</a>
+
+    <script>
+        function aggiungi() {
+            var amount = document.getElementById('amount').value;
+            if (!amount) return;
+            fetch('/aggiungi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ amount: parseInt(amount) }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Importo aggiunto con successo!');
+                    location.reload();
+                } else {
+                    alert('Errore durante l\'aggiunta dell\'importo.');
+                }
+            });
+        }
+
+        function rimuovi() {
+            var amount = document.getElementById('amount').value;
+            if (!amount) return;
+            fetch('/rimuovi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ amount: parseInt(amount) }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Importo rimosso con successo!');
+                    location.reload();
+                } else {
+                    alert('Errore durante la rimozione dell\'importo.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
