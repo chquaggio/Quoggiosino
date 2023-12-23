@@ -1,7 +1,10 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, abort
+from werkzeug.security import generate_password_hash, check_password_hash
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg://casino_user:casino_password@db/casino_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = "your_secret_key"
@@ -12,13 +15,26 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
+    password = db.Column(db.String(100), nullable=True)  # Ensure to hash passwords in a real application
     money = db.Column(db.Integer, default=1000)
+    role = db.Column(db.String(10), default='user')  # 'user' or 'admin'
+    password_hash = db.Column(db.String(128), nullable=True)
+
+    def set_password(self, password=None):
+        if password:
+            self.password = password
+            self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    username = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=False)
     amount = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(50), nullable=False)
+    approved = db.Column(db.Boolean, default=False)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 
@@ -28,56 +44,134 @@ cxt.push()
 db.create_all()
 
 
-@app.route('/')
-def index():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        return render_template('index.html', username=session['username'], balance=user.money)
-    return redirect(url_for('login'))
+admin_user = User.query.filter_by(username='quoggio').first()
+
+if not admin_user:
+    admin_user = User(username='quoggio', role='admin')
+    admin_user.set_password('belando')  # Set a secure password
+    db.session.add(admin_user)
+    db.session.commit()
 
 
-@app.route('/aggiungi', methods=['POST'])
-def aggiungi():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        amount = request.json.get('amount', 0)
-        if amount > 0:
-            user.money += amount
-            transaction = Transaction(user_id=user.id, amount=amount)
-            db.session.add(transaction)
-            db.session.commit()
-            return jsonify({'success': True})
-    return jsonify({'success': False})
+# @app.route('/')
+# def index():
+#     if 'username' in session:
+#         user = User.query.filter_by(username=session['username']).first()
+#         return render_template('index.html', username=session['username'], balance=user.money)
+#     return redirect(url_for('login'))
 
 
-@app.route('/rimuovi', methods=['POST'])
-def rimuovi():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
-        amount = request.json.get('amount', 0)
-        if amount > 0 and user.money >= amount:
-            user.money -= amount
-            transaction = Transaction(user_id=user.id, amount=-amount)
-            db.session.add(transaction)
-            db.session.commit()
-            return jsonify({'success': True})
-    return jsonify({'success': False})
+# @app.before_request
+# def check_user_role():
+#     if 'username' in session:
+#         user = User.query.filter_by(username=session['username']).first()
+#         if user.role == 'admin':
+#             session['is_admin'] = True
+#         else:
+#             session['is_admin'] = False
 
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login', methods=['POST'])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        user = User.query.filter_by(username=username).first()
-        if user is None:
-            new_user = User(username=username)
-            db.session.add(new_user)
-            db.session.commit()
-            user = new_user
+    data = request.json  # Assuming the data is sent as JSON
+    username = data.get('username')
+    password = data.get('password', '')
 
-        session['username'] = username
-        return redirect(url_for('index'))
-    return render_template('login.html')
+    user = User.query.filter_by(username=username).first()
+
+    if not user:
+        new_user = User(username=username)
+        db.session.add(new_user)
+        new_user.set_password(password)
+        db.session.commit()
+        user = new_user
+
+    session['username'] = username
+    return jsonify({'success': True})
+
+
+@app.route('/user_data')
+def user_data():
+    if 'username' in session:
+        user = User.query.filter_by(username=session['username']).first()
+        if user:
+            return jsonify({'username': user.username, 'balance': user.money})
+
+    return jsonify({'error': 'User not found'}), 404
+
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if 'is_admin' in session and session['is_admin']:
+        # Display the admin dashboard with user list, delete user option, and transaction approval
+        users = User.query.all()
+        return render_template('admin_dashboard.html', users=users)
+    else:
+        abort(403)  # Forbidden
+
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if 'is_admin' in session and session['is_admin']:
+        # Delete the user with the specified user_id
+        user = User.query.get(user_id)
+        if user:
+            db.session.delete(user)
+            db.session.commit()
+            return jsonify({'success': True})
+    abort(403)  # Forbidden
+
+
+@app.route('/admin_approve_transactions')
+def admin_approve_transactions():
+    if 'is_admin' in session and session['is_admin']:
+        # Display a list of transactions that need approval
+        transactions = Transaction.query.filter_by(approved=False).all()
+        return render_template('admin_approve_transactions.html', transactions=transactions)
+    abort(403)  # Forbidden
+
+
+@app.route('/approve_transaction/<int:transaction_id>', methods=['POST'])
+def approve_transaction(transaction_id):
+    if 'is_admin' in session and session['is_admin']:
+        # Approve the transaction with the specified transaction_id
+        transaction = Transaction.query.get(transaction_id)
+        if transaction:
+            transaction.approved = True
+            db.session.commit()
+            return jsonify({'success': True})
+    abort(403)  # Forbidden
+
+
+@app.route('/gain', methods=['POST'])
+def gain_money():
+    data = request.get_json()
+    username = data.get('username')
+    amount = data.get('amount')
+    reason = data.get('reason')
+
+    user = User.query.filter_by(username=session['username']).first()
+    user.money += amount
+    new_transaction = Transaction(username=username, amount=amount, reason=reason)
+    db.session.add(new_transaction)
+    db.session.commit()
+
+    return jsonify({"message": "Money gained successfully"}), 200
+
+
+@app.route('/lose', methods=['POST'])
+def lose_money():
+    data = request.get_json()
+    username = data.get('username')
+    amount = data.get('amount')
+    reason = data.get('reason')
+
+    user = User.query.filter_by(username=session['username']).first()
+    user.money -= amount
+    new_transaction = Transaction(username=username, amount=-amount, reason=reason)
+    db.session.add(new_transaction)
+    db.session.commit()
+    return jsonify({"message": "Money deducted successfully"}), 200
 
 
 @app.route('/logout')

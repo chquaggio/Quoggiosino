@@ -18,6 +18,16 @@
         <form id="balance-form">
             <label for="amount">Importo:</label>
             <input type="number" id="amount" name="amount" required>
+            <label for="reason">Motivo:</label>
+            <div>
+                <input type="radio" id="method_1" name="reason" value="method_1" checked>
+                <label for="method_1">Metodo 1</label>
+
+                <input type="radio" id="method_2" name="reason" value="method_2">
+                <label for="method_2">Metodo 2</label>
+
+                <!-- Add more radio buttons for additional reasons -->
+            </div>
             <button type="button" onclick="aggiungi()">Aggiungi</button>
             <button type="button" onclick="rimuovi()">Rimuovi</button>
         </form>
@@ -29,13 +39,14 @@
     <script>
         function aggiungi() {
             var amount = document.getElementById('amount').value;
+            var reason = document.querySelector('input[name="reason"]:checked').value || 'method_1';
             if (!amount) return;
             fetch('/aggiungi', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ amount: parseInt(amount) }),
+                body: JSON.stringify({ amount: parseInt(amount), reason: reason }),
             })
             .then(response => response.json())
             .then(data => {
@@ -50,13 +61,14 @@
 
         function rimuovi() {
             var amount = document.getElementById('amount').value;
+            var reason = document.querySelector('input[name="reason"]:checked').value || 'method_1';
             if (!amount) return;
             fetch('/rimuovi', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ amount: parseInt(amount) }),
+                body: JSON.stringify({ amount: parseInt(amount), reason: reason }),
             })
             .then(response => response.json())
             .then(data => {

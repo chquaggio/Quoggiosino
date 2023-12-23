@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+    
+    <h2>User List</h2>
+    <ul>
+        {% for user in users %}
+            <li>{{ user.username }} <button onclick="deleteUser({{ user.id }})">Delete</button></li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('index') }}">Back to User Dashboard</a>
+
+    <script>
+        function deleteUser(userId) {
+            fetch(`/delete_user/${userId}`, {
+                method: 'POST',
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('User deleted successfully!');
+                    location.reload();
+                } else {
+                    alert('Error deleting user.');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+
