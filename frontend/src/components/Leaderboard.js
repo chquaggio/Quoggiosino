@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useHistory } from 'react-router-dom';
+import QRCode from 'qrcode.react';
 
 const Leaderboard = ({ isAdminMode }) => {
   const history = useHistory();
@@ -67,6 +68,7 @@ const Leaderboard = ({ isAdminMode }) => {
   return (
     <div>
       <h1>Leaderboard</h1>
+      <QRCode value="http://dev-home:3000" />
       <ol>
         {leaderboardData.map((user) => (
           <li key={user.username} style={{ marginBottom: '10px' }}>
