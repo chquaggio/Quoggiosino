@@ -17,13 +17,19 @@ const Login = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        // Redirect or perform other actions on successful login
-        history.push('/user_dashboard');
+        if (data.role === 'admin') {
+          history.push(`/admin_dashboard?username=${encodeURIComponent(username)}`);
+        } else {
+          history.push(`/user_dashboard?username=${encodeURIComponent(username)}`);
+        }
         console.log('Login successful!');
       } else {
         console.error('Login failed.');
+          if (data.error === 'Incorrect password') {
+          alert('Incorrect password. Please try again.');
+        }
       }
     } catch (error) {
       console.error('Error during login:', error);

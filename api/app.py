@@ -1,12 +1,14 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg://casino_user:casino_password@db/casino_db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 app.secret_key = "your_secret_key"
 
 db = SQLAlchemy(app)
@@ -15,9 +17,9 @@ db = SQLAlchemy(app)
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=True)  # Ensure to hash passwords in a real application
+    password = db.Column(db.String(100), nullable=True)
     money = db.Column(db.Integer, default=1000)
-    role = db.Column(db.String(10), default='user')  # 'user' or 'admin'
+    role = db.Column(db.String(10), default='user')
     password_hash = db.Column(db.String(128), nullable=True)
 
     def set_password(self, password=None):
@@ -26,6 +28,8 @@ class User(db.Model):
             self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if self.password_hash is None:
+            return True
         return check_password_hash(self.password_hash, password)
 
 
@@ -48,32 +52,14 @@ admin_user = User.query.filter_by(username='quoggio').first()
 
 if not admin_user:
     admin_user = User(username='quoggio', role='admin')
-    admin_user.set_password('belando')  # Set a secure password
+    admin_user.set_password('belando')
     db.session.add(admin_user)
     db.session.commit()
 
 
-# @app.route('/')
-# def index():
-#     if 'username' in session:
-#         user = User.query.filter_by(username=session['username']).first()
-#         return render_template('index.html', username=session['username'], balance=user.money)
-#     return redirect(url_for('login'))
-
-
-# @app.before_request
-# def check_user_role():
-#     if 'username' in session:
-#         user = User.query.filter_by(username=session['username']).first()
-#         if user.role == 'admin':
-#             session['is_admin'] = True
-#         else:
-#             session['is_admin'] = False
-
-
 @app.route('/login', methods=['POST'])
 def login():
-    data = request.json  # Assuming the data is sent as JSON
+    data = request.json
     username = data.get('username')
     password = data.get('password', '')
 
@@ -86,14 +72,19 @@ def login():
         db.session.commit()
         user = new_user
 
-    session['username'] = username
+    if user.check_password(password):
+        return jsonify({'success': True, 'role': user.role})
+    else:
+        return jsonify({'success': False, 'error': 'Incorrect password'})
     return jsonify({'success': True})
 
 
-@app.route('/user_data')
+@app.route('/user_data', methods=['GET', 'OPTIONS', 'POST'])
+@cross_origin(supports_credentials=True)
 def user_data():
-    if 'username' in session:
-        user = User.query.filter_by(username=session['username']).first()
+    data = request.json
+    if 'username' in data:
+        user = User.query.filter_by(username=data['username']).first()
         if user:
             return jsonify({'username': user.username, 'balance': user.money})
 
@@ -110,15 +101,14 @@ def admin_dashboard():
         abort(403)  # Forbidden
 
 
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@app.route('/delete_user/<int:user_id>', methods=['GET', 'DELETE', 'OPTIONS', 'POST'])
+@cross_origin(supports_credentials=True)
 def delete_user(user_id):
-    if 'is_admin' in session and session['is_admin']:
-        # Delete the user with the specified user_id
-        user = User.query.get(user_id)
-        if user:
-            db.session.delete(user)
-            db.session.commit()
-            return jsonify({'success': True})
+    user = User.query.get(user_id)
+    if user:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'success': True})
     abort(403)  # Forbidden
 
 
@@ -143,14 +133,15 @@ def approve_transaction(transaction_id):
     abort(403)  # Forbidden
 
 
-@app.route('/gain', methods=['POST'])
+@app.route('/gain', methods=['GET', 'OPTIONS', 'POST'])
+@cross_origin(supports_credentials=True)
 def gain_money():
     data = request.get_json()
     username = data.get('username')
     amount = data.get('amount')
     reason = data.get('reason')
 
-    user = User.query.filter_by(username=session['username']).first()
+    user = User.query.filter_by(username=username).first()
     user.money += amount
     new_transaction = Transaction(username=username, amount=amount, reason=reason)
     db.session.add(new_transaction)
@@ -159,14 +150,15 @@ def gain_money():
     return jsonify({"message": "Money gained successfully"}), 200
 
 
-@app.route('/lose', methods=['POST'])
+@app.route('/lose', methods=['GET', 'OPTIONS', 'POST'])
+@cross_origin(supports_credentials=True)
 def lose_money():
     data = request.get_json()
     username = data.get('username')
     amount = data.get('amount')
     reason = data.get('reason')
 
-    user = User.query.filter_by(username=session['username']).first()
+    user = User.query.filter_by(username=username).first()
     user.money -= amount
     new_transaction = Transaction(username=username, amount=-amount, reason=reason)
     db.session.add(new_transaction)
@@ -174,16 +166,20 @@ def lose_money():
     return jsonify({"message": "Money deducted successfully"}), 200
 
 
-@app.route('/logout')
+@app.route('/logout', methods=['GET', 'OPTIONS', 'POST'])
 def logout():
     session.pop('username', None)
     return redirect(url_for('login'))
 
 
-@app.route('/leaderboard')
+@app.route('/leaderboard', methods=['GET', 'OPTIONS', 'POST'])
+@cross_origin(supports_credentials=True)
 def leaderboard():
     users = User.query.order_by(User.money.desc()).all()
-    return render_template('leaderboard.html', users=users)
+
+    leaderboard_data = [{'id': user.id, 'username': user.username, 'balance': user.money} for user in users]
+
+    return jsonify({'leaderboard': leaderboard_data})
 
 
 if __name__ == '__main__':
