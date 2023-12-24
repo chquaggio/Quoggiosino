@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useHistory } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
+  const history = useHistory();
   const [username, setUsername] = useState('');
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState('');
@@ -15,68 +16,43 @@ const UserDashboard = () => {
   const reasons = ['Salary', 'Bonus', 'Expense', 'Other'];
 
   useEffect(() => {
-  fetch('http://dev-home:5000/user_data', {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username: usernameFromParams,
-    }),
-  })
-    .then((response) => {
-      if (!response.ok) {
-        throw new Error(`Network response was not ok: ${response.statusText}`);
-      }
-      return response.json();
-    })
-    .then((data) => {
-      console.log('User data:', data);
-      setUsername(data.username);
-      setBalance(data.balance);
-    })
-    .catch((error) => {
-      console.error('Error fetching user data:', error);
-    });
-}, [usernameFromParams]);
-
-  const handleGainMoney = () => {
-    // Send a request to the Flask API to add money
-    fetch('http://dev-home:5000/gain', {
+    fetch('http://dev-home:5000/user_data', {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: username,
-        amount: parseFloat(amount),
-        reason: reason,
+        username: usernameFromParams,
       }),
     })
-      .then((response) => response.json())
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok: ${response.statusText}`);
+        }
+        return response.json();
+      })
       .then((data) => {
-        setMessage(data.message);
-        setAmount('');
-        setSelectedReason('');
-        fetchUserData();
+        console.log('User data:', data);
+        setUsername(data.username);
+        setBalance(data.balance);
       })
       .catch((error) => {
-        console.error('Error gaining money:', error);
+        console.error('Error fetching user data:', error);
       });
-  };
+  }, [usernameFromParams]);
 
-  const handleLoseMoney = () => {
-    // Send a request to the Flask API to deduct money
-    fetch('http://dev-home:5000/lose', {
+  const handleTransaction = (transactionType) => {
+    // Send a request to the Flask API
+    fetch('http://dev-home:5000/transaction', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         username: username,
-        amount: parseFloat(amount),
-        reason: reason,
+        amount: parseFloat(amount) * (transactionType === 'gain' ? 1 : -1),
+        reason: selectedReason,
       }),
     })
       .then((response) => response.json())
@@ -87,7 +63,7 @@ const UserDashboard = () => {
         fetchUserData();
       })
       .catch((error) => {
-        console.error('Error losing money:', error);
+        console.error(`Error ${transactionType} money:`, error);
       });
   };
   const fetchUserData = () => {
@@ -116,6 +92,9 @@ const UserDashboard = () => {
       .catch((error) => {
         console.error('Error fetching updated user data:', error);
       });
+  };
+  const handleLogout = () => {
+    history.push('/login');
   };
 
    return (
@@ -147,10 +126,13 @@ const UserDashboard = () => {
           </div>
         </label>
         <br />
-        <button onClick={handleGainMoney}>Gain Money</button>
-        <button onClick={handleLoseMoney}>Lose Money</button>
+        <button onClick={() => handleTransaction('gain')}>Gain Money</button>
+        <button onClick={() => handleTransaction('lose')}>Lose Money</button>
       </div>
-      <Link to="/leaderboard">Vai alla leaderboard</Link>
+      <Link to={`/leaderboard?username=${encodeURIComponent(username)}`}>Vai alla leaderboard</Link>
+      <br />
+      <br />
+      <button onClick={handleLogout}>Logout</button>
     </div>
   );
 };

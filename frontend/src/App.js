@@ -6,6 +6,7 @@ import Login from './components/Login';
 import UserDashboard from './components/UserDashboard';
 import Leaderboard from './components/Leaderboard';
 import AdminDashboard from './components/AdminDashboard';
+import PendingTransactions from './components/PendingTransactions';
 
 function App() {
   return (

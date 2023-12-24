@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useHistory } from 'react-router-dom';
 
 const Leaderboard = ({ isAdminMode }) => {
+  const history = useHistory();
   const [leaderboardData, setLeaderboardData] = useState([]);
+  const location = useLocation();
+  const username = new URLSearchParams(location.search).get('username');
 
   const fetchLeaderboardData = () => {
     // Fetch leaderboard data
@@ -45,6 +49,10 @@ const Leaderboard = ({ isAdminMode }) => {
         console.error('Error deleting user:', error);
       });
   };
+  const handleLogout = () => {
+    history.push('/login');
+  };
+
 
   useEffect(() => {
     fetchLeaderboardData();
@@ -73,7 +81,12 @@ const Leaderboard = ({ isAdminMode }) => {
           </li>
         ))}
       </ol>
-    <Link to="/user_dashboard">Ritorna alla dashboard</Link>
+    <Link to={`/user_dashboard?username=${encodeURIComponent(username)}`}>
+      Ritorna alla dashboard
+    </Link>
+    <br />
+    <br />
+    <button onClick={handleLogout}>Logout</button>
     </div>
   );
 };

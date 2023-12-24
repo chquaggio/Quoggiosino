@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, abort
+from flask import Flask, request, redirect, url_for, session, jsonify, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_cors import CORS, cross_origin
 
@@ -39,6 +39,7 @@ class Transaction(db.Model):
     amount = db.Column(db.Integer, nullable=False)
     reason = db.Column(db.String(50), nullable=False)
     approved = db.Column(db.Boolean, default=False)
+    pending = db.Column(db.Boolean, default=True)
     timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 
@@ -91,16 +92,6 @@ def user_data():
     return jsonify({'error': 'User not found'}), 404
 
 
-@app.route('/admin_dashboard')
-def admin_dashboard():
-    if 'is_admin' in session and session['is_admin']:
-        # Display the admin dashboard with user list, delete user option, and transaction approval
-        users = User.query.all()
-        return render_template('admin_dashboard.html', users=users)
-    else:
-        abort(403)  # Forbidden
-
-
 @app.route('/delete_user/<int:user_id>', methods=['GET', 'DELETE', 'OPTIONS', 'POST'])
 @cross_origin(supports_credentials=True)
 def delete_user(user_id):
@@ -112,64 +103,72 @@ def delete_user(user_id):
     abort(403)  # Forbidden
 
 
-@app.route('/admin_approve_transactions')
-def admin_approve_transactions():
-    if 'is_admin' in session and session['is_admin']:
-        # Display a list of transactions that need approval
-        transactions = Transaction.query.filter_by(approved=False).all()
-        return render_template('admin_approve_transactions.html', transactions=transactions)
-    abort(403)  # Forbidden
-
-
-@app.route('/approve_transaction/<int:transaction_id>', methods=['POST'])
+@app.route('/approve_transaction/<int:transaction_id>', methods=['GET', 'POST', 'OPTIONS'])
+@cross_origin(supports_credentials=True)
 def approve_transaction(transaction_id):
-    if 'is_admin' in session and session['is_admin']:
-        # Approve the transaction with the specified transaction_id
-        transaction = Transaction.query.get(transaction_id)
-        if transaction:
+    data = request.json
+    decision = data.get('decision')
+    transaction = Transaction.query.get(transaction_id)
+    user = User.query.filter_by(username=transaction.username).first()
+    if transaction:
+        if decision == 'approve':
             transaction.approved = True
+            user.money += transaction.amount
+            transaction.pending = False
+            db.session.commit()
+            return jsonify({'success': True})
+        elif decision == 'deny':
+            transaction.approved = False
+            user.money -= transaction.amount
+            transaction.pending = False
             db.session.commit()
             return jsonify({'success': True})
     abort(403)  # Forbidden
 
 
-@app.route('/gain', methods=['GET', 'OPTIONS', 'POST'])
+@app.route('/transaction', methods=['GET', 'POST', 'OPTIONS'])
 @cross_origin(supports_credentials=True)
-def gain_money():
+def transaction():
+    if request.method == 'GET':
+        # Get all transactions
+        transactions = Transaction.query.filter_by(pending=True).all()
+        transaction_data = []
+        for transaction in transactions:
+            transaction_data.append({
+                'id': transaction.id,
+                'username': transaction.username,
+                'amount': transaction.amount,
+                'reason': transaction.reason,
+                'pending': transaction.pending,
+                'approved': transaction.approved,
+                'timestamp': transaction.timestamp.isoformat(),
+            })
+        return jsonify({'transactions': transaction_data})
     data = request.get_json()
     username = data.get('username')
     amount = data.get('amount')
     reason = data.get('reason')
 
-    user = User.query.filter_by(username=username).first()
-    user.money += amount
     new_transaction = Transaction(username=username, amount=amount, reason=reason)
     db.session.add(new_transaction)
     db.session.commit()
 
-    return jsonify({"message": "Money gained successfully"}), 200
+    created_transaction = Transaction.query.filter_by(id=new_transaction.id).first()
 
+    if created_transaction:
+        transaction_data = {
+            'id': created_transaction.id,
+            'username': created_transaction.username,
+            'amount': created_transaction.amount,
+            'reason': created_transaction.reason,
+            'pending': created_transaction.pending,
+            'approved': created_transaction.approved,
+            'timestamp': created_transaction.timestamp.isoformat(),
+        }
 
-@app.route('/lose', methods=['GET', 'OPTIONS', 'POST'])
-@cross_origin(supports_credentials=True)
-def lose_money():
-    data = request.get_json()
-    username = data.get('username')
-    amount = data.get('amount')
-    reason = data.get('reason')
+        return jsonify({"message": "Transaction created", "transaction": transaction_data}), 200
 
-    user = User.query.filter_by(username=username).first()
-    user.money -= amount
-    new_transaction = Transaction(username=username, amount=-amount, reason=reason)
-    db.session.add(new_transaction)
-    db.session.commit()
-    return jsonify({"message": "Money deducted successfully"}), 200
-
-
-@app.route('/logout', methods=['GET', 'OPTIONS', 'POST'])
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('login'))
+    return jsonify({"error": "Failed to fetch transaction details"}), 500
 
 
 @app.route('/leaderboard', methods=['GET', 'OPTIONS', 'POST'])

@@ -1,6 +1,7 @@
 import React from 'react';
 import UserDashboard from './UserDashboard';
 import Leaderboard from './Leaderboard';
+import PendingTransactions from './PendingTransactions';
 
 const AdminDashboard = () => {
   return (
@@ -11,6 +12,7 @@ const AdminDashboard = () => {
 
       <Leaderboard isAdminMode={true} />
 
+      <PendingTransactions />
       {/* Add any additional functionalities for the admin dashboard */}
     </div>
   );
