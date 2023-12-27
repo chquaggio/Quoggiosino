@@ -67,7 +67,7 @@ const Leaderboard = ({ isAdminMode }) => {
 
   return (
     <div>
-      <h1>Leaderboard</h1>
+      <h1>Classifica</h1>
       <QRCode value="http://dev-home:3000" />
       <ol>
         {leaderboardData.map((user) => (

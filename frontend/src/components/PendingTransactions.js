@@ -60,22 +60,22 @@ const PendingTransaction = () => {
 
   return (
     <div>
-      <h1>Pending Transactions</h1>
+      <h1>Transazioni in sospeso</h1>
       <ul>
         {pendingTransactions.map((transaction) => (
           <li key={transaction.id}>
             <div>
-              <strong>Username:</strong> {transaction.username}
+              <strong>Utente:</strong> {transaction.username}
             </div>
             <div>
-              <strong>Amount:</strong> {transaction.amount}
+              <strong>Ammontare:</strong> {transaction.amount}
             </div>
             <div>
-              <strong>Reason:</strong> {transaction.reason}
+              <strong>Ragione:</strong> {transaction.reason}
             </div>
             <div>
-              <button onClick={() => handleApproval(transaction.id, "approve")}>Approve</button>
-              <button onClick={() => handleApproval(transaction.id, "deny")}>Reject</button>
+              <button onClick={() => handleApproval(transaction.id, "approve")}>Approva</button>
+              <button onClick={() => handleApproval(transaction.id, "deny")}>Nega</button>
             </div>
           </li>
         ))}

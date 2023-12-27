@@ -13,7 +13,7 @@ const UserDashboard = () => {
   const { search } = useLocation();
   const params = new URLSearchParams(search);
   const usernameFromParams = params.get('username');
-  const reasons = ['Salary', 'Bonus', 'Expense', 'Other'];
+  const reasons = ['Schedina', 'Ruota della fortuna', 'Fogli sul muro', 'Limone con Lucio'];
 
   useEffect(() => {
     fetch('http://dev-home:5000/user_data', {
@@ -99,17 +99,17 @@ const UserDashboard = () => {
 
    return (
     <div>
-      <h1>Welcome, {username}!</h1>
-      <p>Your balance: {balance}</p>
+      <h1>Benvenuto, {username}!</h1>
+      <p>Il tuo saldo: {balance}</p>
       <div>
-        <h2>Transaction</h2>
+        <h2>Gestione transazioni</h2>
         <label>
-          Amount:
+          Ammontare:
           <input type="number" value={amount} onChange={(e) => setAmount(e.target.value)} />
         </label>
         <br />
         <label>
-          Reason:
+          Motivo:
           <div>
             {reasons.map((reason) => (
               <label key={reason}>
@@ -126,10 +126,10 @@ const UserDashboard = () => {
           </div>
         </label>
         <br />
-        <button onClick={() => handleTransaction('gain')}>Gain Money</button>
-        <button onClick={() => handleTransaction('lose')}>Lose Money</button>
+        <button onClick={() => handleTransaction('gain')}>Guadagno</button>
+        <button onClick={() => handleTransaction('lose')}>Perdita</button>
       </div>
-      <Link to={`/leaderboard?username=${encodeURIComponent(username)}`}>Vai alla leaderboard</Link>
+      <Link to={`/leaderboard?username=${encodeURIComponent(username)}`}>Vai alla classifica</Link>
       <br />
       <br />
       <button onClick={handleLogout}>Logout</button>
