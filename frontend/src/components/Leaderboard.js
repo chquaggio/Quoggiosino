@@ -60,7 +60,7 @@ const Leaderboard = ({ isAdminMode }) => {
 
     const intervalId = setInterval(() => {
       fetchLeaderboardData();
-    }, 60000);
+    }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
