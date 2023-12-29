@@ -43,7 +43,7 @@ const Login = () => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-      <Card className="text-dark bg-light p-4" style={{ width: '300px' }}>
+      <Card className="text-dark bg-light p-4" style={{ width: '100%', maxWidth: '300px' }}>
         <img src={casinoIcon} alt="Casino Icon" className="mb-3" />
         <h2>ENTRA AL CASINO PARTY</h2>
 
