@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useHistory } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
 const UserDashboard = () => {
-  const history = useHistory();
   const [username, setUsername] = useState('');
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState('');
@@ -16,30 +15,43 @@ const UserDashboard = () => {
   const reasons = ['Schedina', 'Ruota della fortuna', 'Fogli sul muro', 'Limone con Lucio'];
 
   useEffect(() => {
-    fetch('http://dev-home:5000/user_data', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: usernameFromParams,
-      }),
-    })
-      .then((response) => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      try {
+        const response = await fetch('http://dev-home:5000/user_data', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            username: usernameFromParams,
+          }),
+        });
+
+        if (!isMounted) {
+          return; // Avoid state update on unmounted component
+        }
+
         if (!response.ok) {
           throw new Error(`Network response was not ok: ${response.statusText}`);
         }
-        return response.json();
-      })
-      .then((data) => {
+
+        const data = await response.json();
         console.log('User data:', data);
         setUsername(data.username);
         setBalance(data.balance);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error('Error fetching user data:', error);
-      });
+      }
+    };
+
+    fetchData();
+
+    return () => {
+      isMounted = false; // Set to false when component is unmounted
+    };
   }, [usernameFromParams]);
 
   const handleTransaction = (transactionType) => {
@@ -94,7 +106,7 @@ const UserDashboard = () => {
       });
   };
   const handleLogout = () => {
-    history.push('/login');
+    // history.push('/login');
   };
 
    return (

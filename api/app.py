@@ -119,7 +119,6 @@ def approve_transaction(transaction_id):
             return jsonify({'success': True})
         elif decision == 'deny':
             transaction.approved = False
-            user.money -= transaction.amount
             transaction.pending = False
             db.session.commit()
             return jsonify({'success': True})

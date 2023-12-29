@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const PendingTransaction = () => {
-  const history = useHistory();
   const [pendingTransactions, setPendingTransactions] = useState([]);
 
   useEffect(() => {
@@ -54,7 +53,7 @@ const PendingTransaction = () => {
       });
   };
   const handleLogout = () => {
-    history.push('/login');
+    // history.push('/login');
   };
 
 

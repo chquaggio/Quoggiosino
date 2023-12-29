@@ -1,7 +1,5 @@
-// src/App.js
-
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate} from 'react-router-dom';
 import Login from './components/Login';
 import UserDashboard from './components/UserDashboard';
 import Leaderboard from './components/Leaderboard';
@@ -11,14 +9,15 @@ import PendingTransactions from './components/PendingTransactions';
 function App() {
   return (
     <Router>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/user_dashboard" component={UserDashboard} />
-        <Route path="/leaderboard" component={Leaderboard} />
-        <Route path="/admin_dashboard" component={AdminDashboard} />
+      <Routes>
+        <Route path='/login' element={<Login />} />
+        <Route path='/user_dashboard' element={<UserDashboard />} />
+        <Route path='/leaderboard' element={<Leaderboard />} />
+        <Route path='/admin_dashboard' element={<AdminDashboard />} />
+        <Route path='/' element={<Navigate to='/login' replace />} />
         {/* Add more routes as needed */}
-        <Redirect from="/" to="/login" />
-      </Switch>
+      </Routes>
+      {/* <Navigate from='/' to='/login' /> */}
     </Router>
   );
 }

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation, useHistory } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import QRCode from 'qrcode.react';
 
 const Leaderboard = ({ isAdminMode }) => {
-  const history = useHistory();
   const [leaderboardData, setLeaderboardData] = useState([]);
   const location = useLocation();
   const username = new URLSearchParams(location.search).get('username');
@@ -51,7 +50,7 @@ const Leaderboard = ({ isAdminMode }) => {
       });
   };
   const handleLogout = () => {
-    history.push('/login');
+    // history.push('/login');
   };
 
 
