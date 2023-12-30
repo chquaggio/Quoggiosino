@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { Button } from 'react-bootstrap';
 import QRCode from 'qrcode.react';
 
 const Leaderboard = ({ isAdminMode }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
-  const location = useLocation();
+  const navigate = useNavigate();
   const username = new URLSearchParams(location.search).get('username');
 
   const fetchLeaderboardData = () => {
@@ -65,29 +66,35 @@ const Leaderboard = ({ isAdminMode }) => {
   }, []);
 
   return (
-    <div>
-      <h1>Classifica</h1>
+    <div className="leaderboard-page">
+      <div className="header-container">
+        <h1>CLASSIFICA</h1>
+      </div>
+      <br />
       <QRCode value="http://dev-home:3000" />
-      <ol>
-        {leaderboardData.map((user) => (
-          <li key={user.username} style={{ marginBottom: '10px' }}>
-            <span>
-              {user.username}: {user.balance}
-            </span>
+      <br />
+      <div className="leaderboard-container">
+        {leaderboardData.map((user, index) => (
+          <div key={user.username} className={`leaderboard-entry ${index === 0 ? 'crowned' : ''}`}>
+            <span className="entry-rank">{index + 1}.</span>
+            <span className="entry-name">{user.username}</span>
+            <span className="entry-balance">{user.balance}</span>
             {isAdminMode && (
               <button onClick={() => handleDeleteUser(user.id)} style={{ marginLeft: '10px' }}>
                 Delete
               </button>
             )}
-          </li>
+          </div>
         ))}
-      </ol>
-    <Link to={`/user_dashboard?username=${encodeURIComponent(username)}`}>
-      Ritorna alla dashboard
-    </Link>
-    <br />
-    <br />
-    <button onClick={handleLogout}>Logout</button>
+      </div>
+      <div style={{ marginTop: '20px', textAlign: 'center' }}>
+        <Button variant="link" size="lg" onClick={() => navigate(`/user_dashboard?username=${encodeURIComponent(username)}`)}>
+          Ritorna alla dashboard
+        </Button>
+      </div>
+      <br />
+      <br />
+      <button onClick={handleLogout}>Logout</button>
     </div>
   );
 };

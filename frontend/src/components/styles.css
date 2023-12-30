@@ -54,4 +54,100 @@ body {
   width: 100%;
   display: flex;
   justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.balance-container {
+  background-color: yellow;
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.digit-box {
+  width: 20%;
+  height: 40px;
+  background-color: white;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 3;
+}
+
+
+.leaderboard-icon {
+  width: 20px !important;
+  height: 20px;
+  margin-right: 5px !important;
+}
+
+.leaderboard-page {
+  background-image: url('./slot_machines.png');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 50%;
+}
+
+.leaderboard-entry {
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: black;
+  font-weight: bold;
+  min-height: 30px;
+  width: 100%;
+}
+
+.crowned {
+  border: 2px solid red;
+  position: relative;
+}
+
+.crowned::before {
+  content: '';
+  background-image: url('./crowns.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.entry-rank,
+.entry-name,
+.entry-balance {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.header-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  color: black;
+  width: 50%;
 }
