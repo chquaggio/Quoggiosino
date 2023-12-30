@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Form, Button, Card } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import casinoIcon from './casino-icon.png';
+import casinoLogin from './casino_title.png';
 import './styles.css';
 
 const Login = () => {
@@ -43,12 +44,12 @@ const Login = () => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-      <Card className="text-dark bg-light p-4" style={{ width: '100%', maxWidth: '300px' }}>
+      <Card className="text-dark bg-light py-4" style={{ width: '100%', maxWidth: '300px' }}>
         <img src={casinoIcon} alt="Casino Icon" className="mb-3" />
-        <h2>ENTRA AL CASINO PARTY</h2>
+        <img src={casinoLogin} alt="Casino Icon" className="mb-3 w-100" />
 
         <Form onSubmit={handleLogin}>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3 w-100">
             <Form.Label>NOME</Form.Label>
             <Form.Control
               type="text"
@@ -59,7 +60,7 @@ const Login = () => {
             />
           </Form.Group>
 
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3 w-100">
             <Form.Label>PASSWORD (NON COMPILARE)</Form.Label>
             <Form.Control
               type="password"

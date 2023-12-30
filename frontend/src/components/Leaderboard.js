@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from 'react-bootstrap';
 import QRCode from 'qrcode.react';
+import classificaIcon from './classifica.png';
 
 const Leaderboard = ({ isAdminMode }) => {
   const [leaderboardData, setLeaderboardData] = useState([]);
@@ -68,7 +69,7 @@ const Leaderboard = ({ isAdminMode }) => {
   return (
     <div className="leaderboard-page">
       <div className="header-container">
-        <h1>CLASSIFICA</h1>
+        <img src={classificaIcon} alt="Classifica Icon" className="w-100" />
       </div>
       <br />
       <QRCode value="http://dev-home:3000" />

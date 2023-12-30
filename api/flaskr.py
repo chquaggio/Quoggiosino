@@ -9,9 +9,9 @@ def create_app():
     app.config.from_object(ApplicationConfig)
 
     from models import db, User
+    db.init_app(app)
     app.config['SESSION_SQLALCHEMY'] = db
     app.config['SESSION_SQLALCHEMY_TABLE'] = 'sessions'
-    db.init_app(app)
 
     from config import server_session
     server_session.init_app(app)

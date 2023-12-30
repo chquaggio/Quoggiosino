@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 import { Card, Button, Modal, Form } from 'react-bootstrap';
 import leaderboardIcon from './podium.png';
+import saldoIcon from './saldo.png';
 
 const UserDashboard = () => {
   const [username, setUsername] = useState('');
@@ -133,13 +134,12 @@ const UserDashboard = () => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center vh-100">
-      <Card className="text-dark bg-light p-4" style={{ width: '100%', maxWidth: '300px' }}>
-        <h2>Benvenuto, {username}!</h2>
-        <h2>Il tuo saldo:</h2>
+      <Card className="text-dark bg-light py-4" style={{ width: '100%', maxWidth: '300px' }}>
+        <img src={saldoIcon} alt="Casino Icon" className="mb-1 w-100" />
 
-        <div className="balance-container">
+        <div className="balance-container row">
           {balance.toString().split('').map((digit, index) => (
-            <div key={index} className="digit-box">
+            <div key={index} className="col">
               {digit}
             </div>
           ))}
@@ -149,13 +149,9 @@ const UserDashboard = () => {
 
         <div className="button-container">
           <Button variant="outline-light" size="lg" onClick={() => handleButtonClick('Schedina')}>Schedina</Button>
-          <br />
-          <Button variant="outline-light" size="lg" onClick={() => handleButtonClick('Ruota della f.')}>Ruota della f.</Button>
-          <br />
+          <Button variant="outline-light" size="lg" onClick={() => handleButtonClick('Ruota della fortuna')}>Ruota della fortuna</Button>
           <Button variant="outline-light" size="lg" onClick={() => handleButtonClick('Penitenza')}>Penitenza</Button>
-          <br />
           <Button variant="outline-light" size="lg" onClick={() => handleButtonClick('Giochi')}>Giochi</Button>
-          <br />
         </div>
 
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
@@ -183,9 +179,6 @@ const UserDashboard = () => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={handleModalClose}>
-              Close
-            </Button>
             <Button variant="success" onClick={() => handleTransaction('gain')}>
               Guadagno
             </Button>
