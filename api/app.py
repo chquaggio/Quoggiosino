@@ -1,61 +1,9 @@
-from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, request, jsonify, abort
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_cors import CORS, cross_origin
+from flask import request, jsonify, abort
+from models import db, User, Transaction
+from flask_cors import cross_origin
+from flaskr import create_app
 
-app = Flask(__name__)
-CORS(app, supports_credentials=True, resources={r"/*": {"origins": "*"}})
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+psycopg://casino_user:casino_password@db/casino_db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = True
-app.secret_key = "your_secret_key"
-
-db = SQLAlchemy(app)
-
-
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=True)
-    money = db.Column(db.Integer, default=1000)
-    role = db.Column(db.String(10), default='user')
-    password_hash = db.Column(db.String(128), nullable=True)
-
-    def set_password(self, password=None):
-        if password:
-            self.password = password
-            self.password_hash = generate_password_hash(password)
-
-    def check_password(self, password):
-        if self.password_hash is None:
-            return True
-        return check_password_hash(self.password_hash, password)
-
-
-class Transaction(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), db.ForeignKey('user.username'), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
-    reason = db.Column(db.String(50), nullable=False)
-    approved = db.Column(db.Boolean, default=False)
-    pending = db.Column(db.Boolean, default=True)
-    timestamp = db.Column(db.DateTime, server_default=db.func.now())
-
-
-cxt = app.app_context()
-cxt.push()
-
-db.create_all()
-
-
-admin_user = User.query.filter_by(username='quoggio').first()
-
-if not admin_user:
-    admin_user = User(username='quoggio', role='admin')
-    admin_user.set_password('belando')
-    db.session.add(admin_user)
-    db.session.commit()
+app = create_app()
 
 
 @app.route('/login', methods=['POST'])
