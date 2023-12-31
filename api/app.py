@@ -1,4 +1,4 @@
-from flask import request, jsonify, abort
+from flask import request, jsonify, abort, session
 from models import db, User, Transaction
 from flask_cors import cross_origin
 from flaskr import create_app
@@ -21,8 +21,9 @@ def login():
         db.session.commit()
         user = new_user
 
+    session['user_id'] = user.id
     if user.check_password(password):
-        return jsonify({'success': True, 'role': user.role})
+        return jsonify({'success': True, 'role': user.role, 'id': user.id})
     else:
         return jsonify({'success': False, 'error': 'Incorrect password'})
     return jsonify({'success': True})
