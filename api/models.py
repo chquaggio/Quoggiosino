@@ -14,7 +14,7 @@ class User(db.Model):
     id = db.Column(db.String(32), primary_key=True, unique=True, default=get_uuid)
     username = db.Column(db.String(50), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=True)
-    money = db.Column(db.Integer, default=1000)
+    money = db.Column(db.Integer, default=0)
     role = db.Column(db.String(10), default='user')
     password_hash = db.Column(db.String(128), nullable=True)
 
