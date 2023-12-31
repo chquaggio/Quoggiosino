@@ -129,7 +129,7 @@ const UserDashboard = () => {
       });
   };
   const handleLogout = () => {
-    // history.push('/login');
+    navigate('/login');
   };
 
   return (
@@ -159,6 +159,13 @@ const UserDashboard = () => {
             Vai alla classifica <img src={leaderboardIcon} alt="Leaderboard Icon" className="leaderboard-icon" />
           </Button>
         </div>
+        <br />
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Button variant="light" size="lg" onClick={handleLogout}>
+            Logout
+          </Button>
+        </div>
+
 
         {/* Modal for input */}
         <Modal show={showModal} onHide={handleModalClose}>

@@ -52,7 +52,7 @@ const Leaderboard = ({ isAdminMode }) => {
       });
   };
   const handleLogout = () => {
-    // history.push('/login');
+    navigate('/login');
   };
 
 
@@ -89,13 +89,17 @@ const Leaderboard = ({ isAdminMode }) => {
         ))}
       </div>
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <Button variant="link" size="lg" onClick={() => navigate(`/user_dashboard?username=${encodeURIComponent(username)}`)}>
+        <Button variant="light" size="lg" onClick={() => navigate(`/user_dashboard?username=${encodeURIComponent(username)}`)}>
           Ritorna alla dashboard
         </Button>
       </div>
       <br />
       <br />
-      <button onClick={handleLogout}>Logout</button>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Button variant="light" size="lg" onClick={handleLogout}>
+          Logout
+        </Button>
+      </div>
     </div>
   );
 };
