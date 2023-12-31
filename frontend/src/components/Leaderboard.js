@@ -33,8 +33,8 @@ const Leaderboard = ({ isAdminMode }) => {
       });
   };
 
-  const handleDeleteUser = (userId) => {
-    fetch(`http://dev-home:5000/delete_user/${userId}`, {
+  const handleDeleteUser = (userUsername) => {
+    fetch(`http://dev-home:5000/delete_user/${userUsername}`, {
       method: 'DELETE',
       credentials: 'include',
       headers: {
@@ -81,7 +81,7 @@ const Leaderboard = ({ isAdminMode }) => {
             <span className="entry-name">{user.username}</span>
             <span className="entry-balance">{user.balance}</span>
             {isAdminMode && (
-              <button onClick={() => handleDeleteUser(user.id)} style={{ marginLeft: '10px' }}>
+              <button onClick={() => handleDeleteUser(user.username)} style={{ marginLeft: '10px' }}>
                 Delete
               </button>
             )}

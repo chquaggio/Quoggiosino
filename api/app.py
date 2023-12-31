@@ -41,15 +41,15 @@ def user_data():
     return jsonify({'error': 'User not found'}), 404
 
 
-@app.route('/delete_user/<int:user_id>', methods=['GET', 'DELETE', 'OPTIONS', 'POST'])
+@app.route('/delete_user/<username>', methods=['GET', 'DELETE', 'OPTIONS', 'POST'])
 @cross_origin(supports_credentials=True)
-def delete_user(user_id):
-    user = User.query.get(user_id)
+def delete_user(username):
+    user = User.query.get(username).first()
     if user:
         db.session.delete(user)
         db.session.commit()
         return jsonify({'success': True})
-    abort(403)  # Forbidden
+    abort(403)
 
 
 @app.route('/approve_transaction/<int:transaction_id>', methods=['GET', 'POST', 'OPTIONS'])
