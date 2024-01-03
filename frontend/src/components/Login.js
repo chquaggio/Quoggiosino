@@ -18,6 +18,7 @@ const Login = () => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 
@@ -26,9 +27,9 @@ const Login = () => {
 
       if (data.success) {
         if (data.role === 'admin') {
-          navigate(`/admin_dashboard?username=${encodeURIComponent(username)}`)
+          navigate('/admin_dashboard')
         } else {
-          navigate(`/user_dashboard?username=${encodeURIComponent(username)}`)
+          navigate('/user_dashboard')
         }
         console.log('Login successful!');
       } else {

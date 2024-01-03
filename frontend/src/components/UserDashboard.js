@@ -1,80 +1,56 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
 import { Link } from 'react-router-dom';
 import { Card, Button, Modal, Form } from 'react-bootstrap';
 import leaderboardIcon from './podium.png';
 import saldoIcon from './saldo.png';
 
 const UserDashboard = () => {
+  const [cookies, setCookie, removeCookie] = useCookies(['quoggiosino']);
   const [username, setUsername] = useState('');
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
-  const [selectedReason, setSelectedReason] = useState('');
   const [message, setMessage] = useState('');
   const { search } = useLocation();
   const navigate = useNavigate();
-  const params = new URLSearchParams(search);
-  const usernameFromParams = params.get('username');
-  const reasons = ['Schedina', 'Ruota della fortuna', 'Fogli sul muro', 'Limone con Lucio'];
-  const [inputNumber, setInputNumber] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [selectedAction, setSelectedAction] = useState('');
+  const [selectedReason, setSelectedReason] = useState('');
 
   const handleButtonClick = (action) => {
-    setSelectedAction(action);
+    setSelectedReason(action);
     setShowModal(true);
   };
   const handleModalClose = () => {
     setShowModal(false);
   };
 
-  const handleSave = () => {
-    console.log('Input Number:', inputNumber);
-    console.log('Selected Action:', selectedAction);
-
-    setShowModal(false);
-  };
-
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchData = async () => {
+    const fetchUserData = async () => {
       try {
         const response = await fetch('http://dev-home:5000/user_data', {
-          method: 'POST',
-          credentials: 'include',
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            username: usernameFromParams,
-          }),
+          credentials: 'include',
         });
 
-        if (!isMounted) {
-          return; // Avoid state update on unmounted component
+        if (response.ok) {
+          const data = await response.json();
+          setUsername(data.username);
+          setBalance(data.balance);
+        } else {
+          console.error('Error fetching user data:', response.statusText);
         }
-
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        console.log('User data:', data);
-        setUsername(data.username);
-        setBalance(data.balance);
       } catch (error) {
         console.error('Error fetching user data:', error);
       }
     };
 
-    fetchData();
-
-    return () => {
-      isMounted = false; // Set to false when component is unmounted
-    };
-  }, [usernameFromParams]);
+    fetchUserData();
+  }, []);
 
   const handleTransaction = (transactionType) => {
     // Send a request to the Flask API
@@ -84,52 +60,38 @@ const UserDashboard = () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        username: username,
         amount: parseFloat(amount) * (transactionType === 'gain' ? 1 : -1),
-        reason: selectedAction,
+        reason: selectedReason,
       }),
+      credentials: 'include',
     })
       .then((response) => response.json())
       .then((data) => {
         setMessage(data.message);
         setAmount('');
-        setSelectedReason('');
-        fetchUserData();
       })
       .catch((error) => {
         console.error(`Error ${transactionType} money:`, error);
       });
     setShowModal(false);
   };
-  const fetchUserData = () => {
-    // Fetch user data when the component mounts
-    fetch('http://dev-home:5000/user_data', {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: usernameFromParams,
-      }),
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Updated user data:', data);
-        setUsername(data.username);
-        setBalance(data.balance);
-      })
-      .catch((error) => {
-        console.error('Error fetching updated user data:', error);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('http://dev-home:5000/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
       });
-  };
-  const handleLogout = () => {
-    navigate('/login');
+
+      removeCookie('quoggiosino');
+      navigate('/login');
+
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (
@@ -155,7 +117,7 @@ const UserDashboard = () => {
         </div>
 
         <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Button variant="dark" size="lg" onClick={() => navigate(`/leaderboard?username=${encodeURIComponent(username)}`)}>
+          <Button variant="dark" size="lg" onClick={() => navigate('/leaderboard')}>
             Vai alla classifica <img src={leaderboardIcon} alt="Leaderboard Icon" className="leaderboard-icon" />
           </Button>
         </div>
@@ -170,7 +132,7 @@ const UserDashboard = () => {
         {/* Modal for input */}
         <Modal show={showModal} onHide={handleModalClose}>
           <Modal.Header closeButton style={{ color: 'black' }}>
-            <Modal.Title>{selectedAction}</Modal.Title>
+            <Modal.Title>{selectedReason}</Modal.Title>
           </Modal.Header>
           <Modal.Body>
             <Form>
