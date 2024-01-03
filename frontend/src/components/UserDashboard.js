@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Card, Button, Modal, Form } from 'react-bootstrap';
 import leaderboardIcon from './podium.png';
 import saldoIcon from './saldo.png';
+import { logout, handleTransaction, fetchUserData } from './api.js';
 
 const UserDashboard = () => {
   const [cookies, setCookie, removeCookie] = useCookies(['quoggiosino']);
@@ -27,71 +28,21 @@ const UserDashboard = () => {
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const response = await fetch('http://dev-home:5000/user_data', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setUsername(data.username);
-          setBalance(data.balance);
-        } else {
-          console.error('Error fetching user data:', response.statusText);
-        }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
-
-    fetchUserData();
+    fetchUserData(setUsername, setBalance);
   }, []);
 
-  const handleTransaction = (transactionType) => {
-    // Send a request to the Flask API
-    fetch('http://dev-home:5000/transaction', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount: parseFloat(amount) * (transactionType === 'gain' ? 1 : -1),
-        reason: selectedReason,
-      }),
-      credentials: 'include',
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        setMessage(data.message);
-        setAmount('');
-      })
-      .catch((error) => {
-        console.error(`Error ${transactionType} money:`, error);
-      });
-    setShowModal(false);
+  const handleTransactionSubmit = async (transactionType) => {
+    try {
+      await handleTransaction(transactionType, amount, selectedReason, setMessage, setAmount, setShowModal);
+    } catch (error) {
+      console.error(`Error ${transactionType} money:`, error);
+    };
   };
 
   const handleLogout = async () => {
-    try {
-      await fetch('http://dev-home:5000/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-      });
-
-      removeCookie('quoggiosino');
-      navigate('/login');
-
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
+    await logout();
+    removeCookie('quoggiosino');
+    navigate('/login');
   };
 
   return (
@@ -148,10 +99,10 @@ const UserDashboard = () => {
             </Form>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="success" onClick={() => handleTransaction('gain')}>
+            <Button variant="success" onClick={() => handleTransactionSubmit('gain')}>
               Guadagno
             </Button>
-            <Button variant="danger" onClick={() => handleTransaction('lose')}>
+            <Button variant="danger" onClick={() => handleTransactionSubmit('lose')}>
               Perdita
             </Button>
           </Modal.Footer>

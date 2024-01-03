@@ -118,7 +118,7 @@ def transaction():
             'timestamp': created_transaction.timestamp.isoformat(),
         }
 
-        return jsonify({"message": "Transaction created", "transaction": transaction_data}), 200
+        return jsonify({"message": "Transazione creata", "transaction": transaction_data}), 200
 
     return jsonify({"error": "Failed to fetch transaction details"}), 500
 

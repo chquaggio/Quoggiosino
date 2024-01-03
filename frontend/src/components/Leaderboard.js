@@ -1,70 +1,51 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCookies } from 'react-cookie';
 import { Button } from 'react-bootstrap';
 import QRCode from 'qrcode.react';
 import classificaIcon from './classifica.png';
+import { logout, handleDeleteUser, fetchLeaderboardData } from './api.js';
 
 const Leaderboard = ({ isAdminMode }) => {
+  const [cookies, setCookie, removeCookie] = useCookies(['quoggiosino']);
   const [leaderboardData, setLeaderboardData] = useState([]);
   const navigate = useNavigate();
-  const username = new URLSearchParams(location.search).get('username');
-
-  const fetchLeaderboardData = () => {
-    // Fetch leaderboard data
-    fetch('http://dev-home:5000/leaderboard', {
-      method: 'GET',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Network response was not ok: ${response.statusText}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('Leaderboard data:', data);
-        setLeaderboardData(data.leaderboard);
-      })
-      .catch((error) => {
-        console.error('Error fetching leaderboard data:', error);
-      });
-  };
-
-  const handleDeleteUser = (userUsername) => {
-    fetch(`http://dev-home:5000/delete_user/${userUsername}`, {
-      method: 'DELETE',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log('User deleted:', data);
-        // Refresh leaderboard data after deletion
-        fetchLeaderboardData();
-      })
-      .catch((error) => {
-        console.error('Error deleting user:', error);
-      });
-  };
-  const handleLogout = () => {
-    navigate('/login');
-  };
-
 
   useEffect(() => {
-    fetchLeaderboardData();
+    const fetchData = async () => {
+      try {
+        const data = await fetchLeaderboardData();
+        setLeaderboardData(data);
+      } catch (error) {
+        console.error('Error fetching leaderboard data:', error);
+      };
+    };
+
+    fetchData();
 
     const intervalId = setInterval(() => {
-      fetchLeaderboardData();
+      fetchData();
     }, 30000);
 
     return () => clearInterval(intervalId);
   }, []);
+
+  const handleDelete = async (userUsername) => {
+    try {
+      const data = await handleDeleteUser(userUsername);
+      if (data.success) {
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error deleting user:', error);
+    };
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    removeCookie('quoggiosino');
+    navigate('/login');
+  };
 
   return (
     <div className="leaderboard-page">
@@ -89,7 +70,7 @@ const Leaderboard = ({ isAdminMode }) => {
         ))}
       </div>
       <div style={{ marginTop: '20px', textAlign: 'center' }}>
-        <Button variant="light" size="lg" onClick={() => navigate(`/user_dashboard?username=${encodeURIComponent(username)}`)}>
+        <Button variant="light" size="lg" onClick={() => navigate('/user_dashboard')}>
           Ritorna alla dashboard
         </Button>
       </div>

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import casinoIcon from './casino-icon.png';
 import casinoLogin from './casino_title.png';
 import './styles.css';
+import { login } from './api.js';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,35 +13,24 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    try {
-      const response = await fetch('http://dev-home:5000/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
-      });
 
-      const data = await response.json();
-      console.log(data)
+    try {
+      const data = await login(username, password)
 
       if (data.success) {
         if (data.role === 'admin') {
-          navigate('/admin_dashboard')
+          navigate('/admin_dashboard');
         } else {
-          navigate('/user_dashboard')
+          navigate('/user_dashboard');
         }
-        console.log('Login successful!');
       } else {
-        console.error('Login failed.');
           if (data.error === 'Incorrect password') {
           alert('Incorrect password. Please try again.');
         }
       }
     } catch (error) {
       console.error('Error during login:', error);
-    }
+    };
   };
 
   return (
