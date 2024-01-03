@@ -1,0 +1,192 @@
+body {
+    background-color: #28a745;
+    background: rgb(5,87,27);
+    background: linear-gradient(360deg, rgba(5,87,27,1) 0%, rgba(31,176,70,1) 56%, rgba(40,205,84,1) 100%);
+}
+
+.card {
+    background-color: transparent !important;
+    border-radius: 10px;
+    border: none;
+}
+
+.card img {
+    margin-left: 10px;
+    display: block;
+}
+
+.card h2 {
+    font-size: 2rem;
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 2rem;
+    color: red;
+}
+
+.card form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.card label {
+    font-size: 0.7rem;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: white;
+    font-weight: bold;
+}
+
+.card input {
+    width: 100%;
+    font-size: 0.9rem;
+    background-color: #ffffffa3;
+    padding: 0.5rem;
+    border-radius: 5px;
+    border: none;
+    margin-bottom: 1rem;
+    border-radius: 56px;
+    padding-left: 13px;
+}
+
+.card input:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.button-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.btn-warning {
+    border-radius: 50px;
+    text-transform: uppercase;
+    color: white;
+    background-color: #F58611;
+    border-color: #F58611;
+}
+
+.balance-container {
+    background-color: #f5ad11;
+    display: flex;
+    justify-content: space-between;
+    padding: 5px;
+    margin: 0;
+}
+
+.balance-container div {
+    font-family: 'Roboto Condensed', sans-serif;
+    background-color: white;
+    font-size: 54px;
+    font-weight: 1000;
+    text-align: center;
+    background-clip: content-box;
+    padding: 1%;
+}
+
+.btn-dark {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.digit-box {
+  width: 20%;
+  height: 40px;
+  background-color: white;
+  border: 1px solid #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  line-height: 3;
+}
+
+.btn-outline-light {
+    border: 3px solid white!important;
+    text-transform: uppercase;
+    padding: 5px;
+    font-size: 24px;
+    margin-bottom: 9px;
+}
+
+.leaderboard-icon {
+  width: 20px !important;
+  height: 20px;
+  margin-right: 5px !important;
+}
+
+.leaderboard-page {
+  background-image: url('./slot_machines.png');
+  background-size: cover;
+  background-position: center;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.leaderboard-container {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 50%;
+}
+
+.leaderboard-entry {
+  background-color: white;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: black;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 25px;
+  font-weight: 1000;
+  min-height: 30px;
+  width: 100%;
+}
+
+.crowned {
+  border: 2px solid red;
+  position: relative;
+}
+
+.crowned::before {
+  content: '';
+  background-image: url('./crowns.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.entry-rank,
+.entry-name,
+.entry-balance {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.header-container {
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  color: black;
+  width: 50%;
+}
