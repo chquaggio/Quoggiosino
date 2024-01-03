@@ -7,6 +7,7 @@ app = create_app()
 
 
 @app.route('/login', methods=['POST'])
+@cross_origin(supports_credentials=True)
 def login():
     data = request.json
     username = data.get('username')
@@ -22,6 +23,7 @@ def login():
         user = new_user
 
     session['user_id'] = user.id
+    print(f"session:{session}", flush=True)
     if user.check_password(password):
         return jsonify({'success': True, 'role': user.role, 'id': user.id})
     else:
@@ -32,9 +34,9 @@ def login():
 @app.route('/user_data', methods=['GET', 'OPTIONS', 'POST'])
 @cross_origin(supports_credentials=True)
 def user_data():
-    data = request.json
-    if 'username' in data:
-        user = User.query.filter_by(username=data['username']).first()
+    user_id = session.get('user_id')
+    if user_id:
+        user = User.query.filter_by(id=user_id).first()
         if user:
             return jsonify({'username': user.username, 'balance': user.money})
 
@@ -44,7 +46,7 @@ def user_data():
 @app.route('/delete_user/<username>', methods=['GET', 'DELETE', 'OPTIONS', 'POST'])
 @cross_origin(supports_credentials=True)
 def delete_user(username):
-    user = User.query.get(username).first()
+    user = User.query.filter_by(username=username).first()
     if user:
         db.session.delete(user)
         db.session.commit()
@@ -92,12 +94,14 @@ def transaction():
                 'timestamp': transaction.timestamp.isoformat(),
             })
         return jsonify({'transactions': transaction_data})
+    user_id = session.get('user_id')
+    user = User.query.filter_by(id=user_id).first()
+
     data = request.get_json()
-    username = data.get('username')
     amount = data.get('amount')
     reason = data.get('reason')
 
-    new_transaction = Transaction(username=username, amount=amount, reason=reason)
+    new_transaction = Transaction(username=user.username, amount=amount, reason=reason)
     db.session.add(new_transaction)
     db.session.commit()
 
@@ -127,6 +131,13 @@ def leaderboard():
     leaderboard_data = [{'id': user.id, 'username': user.username, 'balance': user.money} for user in users]
 
     return jsonify({'leaderboard': leaderboard_data})
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+
+    return jsonify({'success': True})
 
 
 if __name__ == '__main__':
