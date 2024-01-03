@@ -1,6 +1,9 @@
 from datetime import datetime, timedelta
 from uuid import uuid4
-import pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
 
 from flask import current_app
 from flask.sessions import SessionInterface
@@ -35,7 +38,7 @@ class TassaronSessionInterface(SessionInterface):
 
     serializer = pickle
 
-    def __init__(self, app, db):
+    def __init__(self, app, db, use_signer=True):
         """
         Original code from Flask-Session.
         Adapted from a pull request: https://github.com/fengsp/flask-session/pull/12
@@ -45,6 +48,7 @@ class TassaronSessionInterface(SessionInterface):
         """
         self.app = app
         self.db = db
+        self.use_signer = use_signer
         self.key_prefix = "session:"
         self.permanent = True
         app.permanent_session_lifetime = timedelta(days=7)
@@ -58,7 +62,7 @@ class TassaronSessionInterface(SessionInterface):
 
                 id = self.db.Column(self.db.Integer, primary_key=True)
                 session_id = self.db.Column(self.db.String(256), unique=True)
-                data = self.db.Column(self.db.Text)
+                data = self.db.Column(self.db.LargeBinary)
                 expiry = self.db.Column(self.db.DateTime)
                 user_id = self.db.Column(
                     self.db.String(32), self.db.ForeignKey("user.id"), nullable=True
@@ -130,45 +134,34 @@ class TassaronSessionInterface(SessionInterface):
         return self.serializer.loads(want_bytes(val))
 
     def open_session(self, app, request):
-        """Original code from Flask-Session. Modified by tassaron"""
         sid = request.cookies.get(app.config["SESSION_COOKIE_NAME"])
         if not sid:
             sid = self._generate_sid()
             return ServerSideSession(sid=sid, permanent=self.permanent)
-
-        try:
-            sid = self.unsign_sid(app, sid)
-        except BadSignature:
-            sid = self._generate_sid()
-            return ServerSideSession(sid=sid, permanent=self.permanent)
-
-        if sid is None:
-            return
+        if self.use_signer:
+            try:
+                sid = self.unsign_sid(app, sid)
+            except BadSignature:
+                sid = self._generate_sid()
+                return ServerSideSession(sid=sid, permanent=self.permanent)
 
         store_id = self.key_prefix + sid
         saved_session = self.sql_session_model.query.filter_by(
             session_id=store_id
         ).first()
+        if saved_session and saved_session.expiry <= datetime.utcnow():
+            # Delete expired session
+            self.db.session.delete(saved_session)
+            self.db.session.commit()
+            saved_session = None
         if saved_session:
             try:
-                data = self.decrypt(saved_session.data)
-                if saved_session.expiry >= datetime.utcnow():
-                    # Session is expired
-                    if saved_session.user_id is not None:
-                        # it belongs to a registered user, so un-expire it,
-                        # but empty their cart because it's likely out of date
-                        if "cart" in data:
-                            del data["cart"]
-                    return ServerSideSession(data, sid=sid)
-
-                # Delete expired session
-                self.db.session.delete(saved_session)
-                self.db.session.commit()
-
-            except IntegrityError:
-                self.app.logger.critical("Could not delete expired session %s", sid)
+                val = saved_session.data
+                data = self.serializer.loads(want_bytes(val))
+                return ServerSideSession(data, sid=sid)
             except Exception as e:
-                self.app.logger.error("Unknown error in session interface: %s", e)
+                self.app.logger.info(e)
+                return ServerSideSession(sid=sid, permanent=self.permanent)
         return ServerSideSession(sid=sid, permanent=self.permanent)
 
     def save_session(self, app, session, response):
@@ -189,11 +182,9 @@ class TassaronSessionInterface(SessionInterface):
                 )
             return
 
-        if "sync_local_to_upstream_sid" in session:
-            session.sid = session.pop("sync_local_to_upstream_sid")
-
         httponly = self.get_cookie_httponly(app)
-        secure = self.get_cookie_secure(app)
+        # secure = self.get_cookie_secure(app)
+        secure = False
         expires = self.get_expiration_time(app, session)
         val = self.serializer.dumps(dict(session))
         if saved_session:
@@ -205,7 +196,10 @@ class TassaronSessionInterface(SessionInterface):
             self.db.session.add(new_session)
             self.db.session.commit()
 
-        session_id = self.sign_sid(app, session.sid)
+        if self.use_signer:
+            session_id = self.sign_sid(app, session.sid)
+        else:
+            session_id = session.sid
 
         response.set_cookie(
             app.config["SESSION_COOKIE_NAME"],
